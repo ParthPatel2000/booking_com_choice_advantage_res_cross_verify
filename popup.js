@@ -79,26 +79,51 @@ function sendToBackground(results) {
     );
 }
 
-
-
 document.addEventListener("DOMContentLoaded", () => {
     const runBotBtn = document.getElementById("runBot");
 
-    runBotBtn.addEventListener("click", async () => {
-        // Tell background the bot is running
-        chrome.runtime.sendMessage({ type: "START_BOT" }, (response) => {
-            if (response?.started) {
-                console.log("Bot started, now opening Choice page");
-    
-                chrome.tabs.create({
-                    url: "https://www.choiceadvantage.com/choicehotels/FindReservationInitialize.init"
-                }, (tab) => {
-                    console.log("Bot tab opened:", tab.id);
-                });
-            }
-        });
+    // Click handler
+    runBotBtn.addEventListener("click", () => {
+        // Check current button state to toggle
+        if (runBotBtn.textContent.includes("Run")) {
+            chrome.runtime.sendMessage({ type: "START_BOT" });
+
+            chrome.tabs.create({
+                url: "https://www.choiceadvantage.com/choicehotels/FindReservationInitialize.init"
+            }, (tab) => {
+                console.log("Bot started on tab:", tab.id);
+            });
+        } else {
+            chrome.runtime.sendMessage({ type: "STOP_BOT" });
+        }
     });
 
+    // Function to update button appearance
+    function updateButton(running) {
+        if (running) {
+            runBotBtn.style.backgroundColor = "red";
+            runBotBtn.textContent = "Stop Bot";
+        } else {
+            runBotBtn.style.backgroundColor = "green";
+            runBotBtn.textContent = "Run Bot(Check Reservations on Choice)";
+        }
+    }
+
+    // Poll the background every 500ms
+    function pollBotStatus() {
+        chrome.runtime.sendMessage({ type: "GET_STATUS" }, (res) => {
+            if (res && typeof res.running === "boolean") {
+                updateButton(res.running);
+            }
+        });
+    }
+
+    // Start polling
+    setInterval(pollBotStatus, 500);
+});
+
+
+document.addEventListener("DOMContentLoaded", () => {
     
    function updateNoShowList() {
         chrome.runtime.sendMessage({ type: "GET_RESULTS" }, (response) => {

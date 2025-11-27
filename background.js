@@ -5,19 +5,51 @@ let reservations = {};        // loaded from popup; each key is reservation#, va
 let reservationQueue = [];    // list of reservation numbers
 let currentIndex = 0;         // pointer
 let botRunning = false;
+
+
+function saveState() {
+    chrome.storage.local.set({
+        SW_STATE: {
+            botRunning,
+            reservations,
+            reservationQueue,
+            currentIndex
+        }
+    });
+}
+
+chrome.storage.local.get("SW_STATE", (data) => {
+    if (!data.SW_STATE) return;
+
+    botRunning = data.SW_STATE.botRunning || false;
+    reservations = data.SW_STATE.reservations || {};
+    reservationQueue = data.SW_STATE.reservationQueue || [];
+    currentIndex = data.SW_STATE.currentIndex || 0;
+
+    console.log("Restored state from storage:", data.SW_STATE);
+});
+
+
+
 // ===============================
 // LISTEN FOR POPUP SENDING RESERVATIONS
 // ===============================
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg.type === "START_BOT") {
         botRunning = true;
+        saveState();
         sendResponse({ started: true });
     }
-    
+
     if (msg.type === "STOP_BOT") {
         botRunning = false;
+        saveState();
         console.log("Stop bot message Received")
         sendResponse({ stopped: true });
+    }
+
+    if (msg.type === "GET_STATUS") {
+        sendResponse({ running: botRunning });
     }
 
     // From popup → load reservations and reset
@@ -26,6 +58,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         reservationQueue = Object.keys(reservations);
         currentIndex = 0;
 
+        saveState();
         console.log("Loaded reservations:", reservations);
         sendResponse({ ok: true });
     }
@@ -50,12 +83,13 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
         // Move to next reservation
         currentIndex++;
+        saveState();
 
         // If finished → save to storage and reset
         if (currentIndex >= reservationQueue.length) {
             console.log("All reservations processed.");
             botRunning = false;
-            console.log("bot_run_Status:", botRunning")
+            console.log("bot_run_Status:", botRunning)
             console.log("Final reservations with status:", reservations);
 
             chrome.storage.local.set({ CHOICE_RESULTS: reservations }, () => {
@@ -65,6 +99,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             reservations = {};
             reservationQueue = [];
             currentIndex = 0;
+            saveState();
             return;
         }
 
@@ -77,15 +112,15 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     // Request from popup to get current results
     if (msg.type === "GET_RESULTS") {
         let results = [];
-    
+
         // If we have in-memory reservations, send them as an array
         if (Object.keys(reservations).length) {
             results = Object.values(reservations);
             sendResponse({ reservations: results });
-            console.log("Sending in-memory results.: ",results)
+            console.log("Sending in-memory results.: ", results)
             return true;
         }
-    
+
         // Otherwise, try to get cached results from storage
         chrome.storage.local.get("CHOICE_RESULTS", (data) => {
             if (data.CHOICE_RESULTS) {
@@ -94,12 +129,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             sendResponse({ reservations: results });
             console.log("Sending cached results.");
         });
-    
-        return true; // required for async response
-        }
 
-    if(msg.type==="GET_CURRENT_RES")
-    {
+        return true; // required for async response
+    }
+
+    if (msg.type === "GET_CURRENT_RES") {
         const currentResKey = reservationQueue[currentIndex];
         const currentResObj = reservations[currentResKey];
         sendResponse({ currentReservation: currentResObj });
@@ -122,12 +156,12 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
         console.log("Injecting findReservationByDetails.js on Init");
 
         chrome.scripting.executeScript({
-                target: { tabId },
-                files: ["scripts/findReservationByDetails.js"]
-            }, () => {
-                console.log("findReservationByDetails.js injected");
-                sendNextReservation(tabId);
-            });
+            target: { tabId },
+            files: ["scripts/findReservationByDetails.js"]
+        }, () => {
+            console.log("findReservationByDetails.js injected");
+            sendNextReservation(tabId);
+        });
     }
 
     // Inject STATUS script on Results page
