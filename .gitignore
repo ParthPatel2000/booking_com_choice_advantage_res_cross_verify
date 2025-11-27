@@ -1,0 +1,33 @@
+# Node modules (if you use npm/yarn for build tools)
+node_modules/
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Build/dist directories (if you have a build step)
+dist/
+build/
+
+# Environment files (if any API keys or secrets)
+.env
+.env.local
+
+# IDE/editor configs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Chrome extension packaging output
+*.crx
+*.pem
+
+# Temporary files
+*.tmp
+*.swp
+*.bak
+*.old

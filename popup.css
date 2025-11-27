@@ -1,0 +1,140 @@
+body {
+    font-family: Arial, sans-serif;
+    padding: 10px;
+    width: 350px;
+}
+
+input,
+button,
+textarea {
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+h4 {
+    margin-bottom: 4px; /* smaller space below the h4 */
+    margin-top: 10px;   /* optional, adjust top spacing if needed */
+}
+
+
+textarea {
+    height: 150px;
+    resize: none;
+}
+
+/* Tooltip styling */
+.tooltip {
+    position: relative;
+    display: block;       /* make parent a block so width works */
+    cursor: help;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.tooltip .tooltiptext {
+    visibility: hidden;
+    opacity: 0;
+    width: 95%;           /* nearly full width of the parent container */
+    background-color: #333;
+    color: #fff;
+    text-align: left;
+    padding: 10px;
+    border-radius: 6px;
+    position: absolute;
+    z-index: 10;
+    top: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    word-wrap: break-word;
+}
+
+.tooltip .tooltiptext::after {
+    content: "";
+    position: absolute;
+    top: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent #333 transparent;
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}
+
+#filters {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap; /* wrap if too narrow */
+    margin-bottom: 5px;
+}
+
+.filterBox {
+    display: flex;
+    flex-direction: column; /* stack checkbox above label text */
+    align-items: center;    /* center horizontally */
+    padding: 4px 8px;
+    background-color: #f0f0f0;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.filterBox input {
+    margin: 0 0 4px 0; /* space below checkbox */
+    cursor: pointer;
+}
+
+#noShowList {
+    height: 230px;       /* or whatever fits your popup */
+    overflow-y: auto;    /* vertical scroll */
+    border: 1px solid #ccc;
+    padding: 5px;
+    background: #f9f9f9;
+}
+
+#runBot {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background 0.2s;
+}
+
+#runBot:hover {
+    background-color: #45a049;
+}
+
+.stayChangeLine {
+    background-color: #ffcccc;
+    font-weight: bold;
+    position: relative;
+}
+
+#noShowList div {
+    position: relative; /* ensure ::after has a positioning context */
+    cursor: help;       /* show pointer that it's interactive */
+}
+
+#noShowList div:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 0;
+    top: 100%;
+    background: #333;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    white-space: pre;  /* preserves newlines */
+    font-size: 12px;
+    z-index: 10;
+}

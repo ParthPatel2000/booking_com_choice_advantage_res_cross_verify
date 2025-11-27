@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Booking XLS → Choice Reservation Status Checker</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+
+<body>
+    <h1 class="tooltip">
+        Booking XLS → Choice Reservation Status Checker
+        <span class="tooltiptext">
+            Upload your Booking XLS, then run the bot to check reservation statuses in Choice Advantage.
+        </span>
+    </h1>
+
+    <h3 class="tooltip">
+        Upload Booking Reservations XLS
+        <span class="tooltiptext">
+            1. Download reservations list from Booking in csv form (filter:Hotel Collect(optional)).<br>
+            2. Upload the XLS file here and when its processed run the bot.<br>
+            3. The bot will check reservation statuses in Choice Advantage.<br>
+            4. “Reservation Status” will show In House, Cancelled, or No Show.
+            5. By default we only show the cancelled and No show filters.
+        </span>
+    </h3>
+
+    <input type="file" id="xlsFile" accept=".xls,.xlsx" />
+    <button id="runBot">Run (Check Reservations on Choice) </button>
+
+    <h4>Filter Reservations by status:</h4>
+    <div id="filters">
+        <label class="filterBox"><input type="checkbox" class="statusFilter" value="No Show" checked> No Show</label>
+        <label class="filterBox"><input type="checkbox" class="statusFilter" value="Cancelled" checked>
+            Cancelled</label>
+        <label class="filterBox"><input type="checkbox" class="statusFilter" value="In House" checked> In House</label>
+        <label class="filterBox"><input type="checkbox" class="statusFilter" value="Checked Out" checked> Checked
+            Out</label>
+    </div>
+    <h4>Choice Advantage Reservation status:</h4>
+    <!-- <textarea id="noShowList" readonly></textarea> -->
+    <div id="noShowList"></div>
+
+
+    <div style="text-align:center; font-size:10px; color:#888; margin-top:10px;">
+        by Parth
+    </div>
+    <script src="xlsx.full.min.js"></script>
+    <script src="popup.js"></script>
+</body>
+
+</html>
