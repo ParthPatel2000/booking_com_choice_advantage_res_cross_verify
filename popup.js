@@ -52,7 +52,7 @@ function parseXLS(rows) {
 
         results[key] = {
             lastname: last,
-            firstname:first,
+            firstname: first,
             checkin: row["Check-in"] || "",
             checkout: row["Check-out"] || "",
             rooms: row["Rooms"] || "",
@@ -122,38 +122,141 @@ document.addEventListener("DOMContentLoaded", () => {
     setInterval(pollBotStatus, 500);
 });
 
-
 document.addEventListener("DOMContentLoaded", () => {
-    
-   function updateNoShowList() {
-        chrome.runtime.sendMessage({ type: "GET_RESULTS" }, (response) => {
-            if (!response || !response.reservations || !response.reservations.length) {
-                console.log("No reservations found");
-                const container = document.getElementById("noShowList");
-                if (container) container.textContent = "No reservations loaded.";
+
+    const tooltip = document.getElementById("tooltip");
+
+    // Show tooltip above/below depending on available space
+    function attachTooltipListeners() {
+        document.querySelectorAll("#noShowList div").forEach(line => {
+            // Remove existing listeners to prevent duplicates
+            line.onmouseenter = null;
+            line.onmouseleave = null;
+
+            line.addEventListener("mouseenter", () => {
+                tooltip.textContent = line.dataset.tooltip;
+
+                const rect = line.getBoundingClientRect();
+                const tooltipHeight = tooltip.offsetHeight || 150;
+                const spaceBelow = window.innerHeight - rect.bottom;
+                const top = spaceBelow > tooltipHeight + 10
+                    ? rect.bottom + window.scrollY + 5  // show below
+                    : rect.top + window.scrollY - tooltipHeight - 5; // show above
+
+                tooltip.style.top = `${top}px`;
+                tooltip.style.left = `${rect.left + window.scrollX}px`;
+                tooltip.style.display = "block";
+            });
+
+            line.addEventListener("mouseleave", () => {
+                tooltip.style.display = "none";
+            });
+        });
+    }
+
+    function formatDepartureMap(departureMap) {
+        if (!departureMap) return "";
+
+        const lines = [];
+        for (const [date, statuses] of Object.entries(departureMap)) {
+            // If all statuses are "Checked Out", skip (no action needed)
+            if (statuses.every(s => s === "Checked Out")) continue;
+
+            // Otherwise, show date and all statuses
+            lines.push(`${date} → ${statuses.join(" / ")}`);
+        }
+
+        if (!lines.length) return "All rooms departed as expected";
+        return lines.join("\n"); // multiline for tooltip readability
+    }
+
+    // function updateNoShowList() {
+    //     chrome.storage.local.get("CHOICE_RESULTS", (data) => {
+    //         const reservations = data.CHOICE_RESULTS ? Object.values(data.CHOICE_RESULTS) : [];
+    //         const container = document.getElementById("noShowList");
+    //         if (!container) return;
+
+    //         container.innerHTML = "";
+
+    //         if (!reservations.length) {
+    //             container.textContent = "No reservations loaded.";
+    //             return;
+    //         }
+
+    //         const checkedFilters = Array.from(document.querySelectorAll(".statusFilter:checked"))
+    //             .map(cb => cb.value);
+
+    //         reservations.forEach((data, index) => {
+    //             const status = data.choiceStatus || "";
+    //             const stayChanged = data.checkin !== data.choice_arrival || data.checkout !== data.choice_departure;
+
+    //             if (!checkedFilters.includes(status) && !stayChanged) return;
+
+    //             const line = document.createElement("div");
+    //             line.textContent = `${index + 1} - ${data.lastname}, ${data.firstname} - ${status}`;
+
+    //             line.dataset.tooltip =
+    //                 `Name: ${data.firstname} ${data.lastname}\n` +
+    //                 `Booking Status: ${data.status}\n` +
+    //                 `Choice Advantage Status: ${status}\n` +
+    //                 `Booking Stay: ${data.checkin} → ${data.checkout}\n` +
+    //                 `Choice Stay: ${data.choice_arrival || null} → ${data.choice_departure || null}\n` +
+    //                 `Rooms: ${data.rooms}\n` +
+    //                 `Price: ${data.price}\n` +
+    //                 `Commission: ${data.commission_amount}\n` +
+    //                 `Per Room Status:\n${formatDepartureMap(data.departureMap)}`;
+
+    //             if (stayChanged) {
+    //                 line.style.backgroundColor = "#ffcccc";
+    //                 line.textContent += " - STAY CHANGED";
+    //             }
+
+    //             container.appendChild(line);
+    //         });
+
+    //         if (!container.hasChildNodes()) {
+    //             container.textContent = "No reservations match the selected filters.";
+    //         } else {
+    //             attachTooltipListeners(); // attach listeners after all lines are rendered
+    //         }
+    //     });
+    // }
+
+    function updateNoShowList() {
+        chrome.storage.local.get("CHOICE_RESULTS", (data) => {
+            const reservations = data.CHOICE_RESULTS ? Object.values(data.CHOICE_RESULTS) : [];
+            const container = document.getElementById("noShowList");
+            if (!container) return;
+
+            container.innerHTML = "";
+
+            if (!reservations.length) {
+                container.textContent = "No reservations loaded.";
                 return;
             }
-    
-            console.log("Reservations found:", response.reservations);
-    
+
+            // Get checked status filters
             const checkedFilters = Array.from(document.querySelectorAll(".statusFilter:checked"))
                 .map(cb => cb.value);
-    
-            const container = document.getElementById("noShowList");
-            container.innerHTML = "";
-    
-            response.reservations.forEach((data, index) => {
+
+            // Get zero commission filter
+            const hideZero = document.getElementById("hideZeroCommission").checked;
+
+            reservations.forEach((data, index) => {
                 const status = data.choiceStatus || "";
                 const stayChanged = data.checkin !== data.choice_arrival || data.checkout !== data.choice_departure;
-    
-                // Show if matches filters OR stay changed
+                const commission = data.commission_amount;
+
+                // Filter by status
                 if (!checkedFilters.includes(status) && !stayChanged) return;
-    
+
+                // Filter by zero commission if checkbox is checked
+                if (!hideZero && (!commission || commission === 0 || commission==="NaN")) return;
+
                 const line = document.createElement("div");
                 line.textContent = `${index + 1} - ${data.lastname}, ${data.firstname} - ${status}`;
-    
-                // Add tooltip for all reservations
-                let tooltipText = 
+
+                line.dataset.tooltip =
                     `Name: ${data.firstname} ${data.lastname}\n` +
                     `Booking Status: ${data.status}\n` +
                     `Choice Advantage Status: ${status}\n` +
@@ -161,25 +264,39 @@ document.addEventListener("DOMContentLoaded", () => {
                     `Choice Stay: ${data.choice_arrival || null} → ${data.choice_departure || null}\n` +
                     `Rooms: ${data.rooms}\n` +
                     `Price: ${data.price}\n` +
-                    `Commission: ${data.commission_amount}`;
-            
-                line.dataset.tooltip = tooltipText;
-    
-                // Highlight stay changes visually (optional)
+                    `Commission: ${commission}\n` +
+                    `Per Room Status:\n${formatDepartureMap(data.departureMap)}`;
+
                 if (stayChanged) {
                     line.style.backgroundColor = "#ffcccc";
                     line.textContent += " - STAY CHANGED";
                 }
-    
+
                 container.appendChild(line);
             });
-    
+
             if (!container.hasChildNodes()) {
                 container.textContent = "No reservations match the selected filters.";
+            } else {
+                attachTooltipListeners(); // attach listeners after all lines are rendered
             }
         });
     }
 
+
+    // Initial load
     updateNoShowList();
-    setInterval(updateNoShowList, 2000);
+
+    // Update list when storage changes
+    chrome.storage.onChanged.addListener((changes, area) => {
+        if (area === "local" && changes.CHOICE_RESULTS) {
+            updateNoShowList();
+        }
+    });
+
+    // Optional: update list when filters change
+    document.querySelectorAll(".statusFilter").forEach(cb => {
+        cb.addEventListener("change", updateNoShowList);
+    });
 });
+
