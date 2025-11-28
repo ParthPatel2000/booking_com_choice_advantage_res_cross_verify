@@ -29,7 +29,7 @@
     <input type="file" id="xlsFile" accept=".xls,.xlsx" />
     <button id="runBot" style="background-color: green;">Run Bot(Check Reservations on Choice)</button>
 
-    <h4 style="margin-top: 2px;">Filter Reservations:</h4>
+    <h4 style="margin-top: 2px;">Filter Reservations (Stay change always visible):</h4>
     
     <div id="filters">
         <label class="filterBox" title="check to see reservations marked No show in choice Advantage" >
@@ -45,11 +45,11 @@
             <span>In House</span>
         </label>
         <label class="filterBox" title="check to see reservations marked Checked out in choice Advantage" >
-            <input type="checkbox" class="statusFilter" value="Checked Out" checked>
+            <input type="checkbox" class="statusFilter" value="Checked Out">
             <span>Checked Out</span>
         </label>
         <label class="filterBox" title="check to see reservations with 0 or missing commission" >
-            <input type="checkbox" class="statusFilter" id="hideZeroCommission" checked >
+            <input type="checkbox" class="statusFilter" id="hideZeroCommission">
             <span>Zero Commission</span>
         </label>
     </div>
