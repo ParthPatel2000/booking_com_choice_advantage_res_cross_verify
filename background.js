@@ -60,6 +60,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
         saveState();
         console.log("Loaded reservations:", reservations);
+        chrome.storage.local.set({ CHOICE_RESULTS: reservations }, () => {
+            console.log("Saved reservations to chrome.storage.local");
+        });
         sendResponse({ ok: true });
     }
 
@@ -75,6 +78,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             resObj.choice_arrival = msg.choice_arrival || null;
             resObj.choice_departure = msg.choice_departure || null;
             resObj.departureMap = msg.departureMap || null;
+
+            chrome.storage.local.set({ CHOICE_RESULTS: reservations }, () => {
+                console.log("Saved reservations to chrome.storage.local");
+            });
 
             console.log("Updated reservation object:", resObj);
         } else {

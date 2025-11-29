@@ -45,7 +45,7 @@ function parseXLS(rows) {
 
     rows.forEach((row, idx) => {
         // Create a key since no confirmation number exists
-        const key = "ROW_" + (idx + 1);
+        const key = (idx + 1);
 
         const raw_name_str = row["Booked by"] || "";
         const { first, last } = splitBookedBy(raw_name_str);
@@ -169,58 +169,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!lines.length) return "All rooms departed as expected";
         return lines.join("\n"); // multiline for tooltip readability
     }
-
-    // function updateNoShowList() {
-    //     chrome.storage.local.get("CHOICE_RESULTS", (data) => {
-    //         const reservations = data.CHOICE_RESULTS ? Object.values(data.CHOICE_RESULTS) : [];
-    //         const container = document.getElementById("noShowList");
-    //         if (!container) return;
-
-    //         container.innerHTML = "";
-
-    //         if (!reservations.length) {
-    //             container.textContent = "No reservations loaded.";
-    //             return;
-    //         }
-
-    //         const checkedFilters = Array.from(document.querySelectorAll(".statusFilter:checked"))
-    //             .map(cb => cb.value);
-
-    //         reservations.forEach((data, index) => {
-    //             const status = data.choiceStatus || "";
-    //             const stayChanged = data.checkin !== data.choice_arrival || data.checkout !== data.choice_departure;
-
-    //             if (!checkedFilters.includes(status) && !stayChanged) return;
-
-    //             const line = document.createElement("div");
-    //             line.textContent = `${index + 1} - ${data.lastname}, ${data.firstname} - ${status}`;
-
-    //             line.dataset.tooltip =
-    //                 `Name: ${data.firstname} ${data.lastname}\n` +
-    //                 `Booking Status: ${data.status}\n` +
-    //                 `Choice Advantage Status: ${status}\n` +
-    //                 `Booking Stay: ${data.checkin} → ${data.checkout}\n` +
-    //                 `Choice Stay: ${data.choice_arrival || null} → ${data.choice_departure || null}\n` +
-    //                 `Rooms: ${data.rooms}\n` +
-    //                 `Price: ${data.price}\n` +
-    //                 `Commission: ${data.commission_amount}\n` +
-    //                 `Per Room Status:\n${formatDepartureMap(data.departureMap)}`;
-
-    //             if (stayChanged) {
-    //                 line.style.backgroundColor = "#ffcccc";
-    //                 line.textContent += " - STAY CHANGED";
-    //             }
-
-    //             container.appendChild(line);
-    //         });
-
-    //         if (!container.hasChildNodes()) {
-    //             container.textContent = "No reservations match the selected filters.";
-    //         } else {
-    //             attachTooltipListeners(); // attach listeners after all lines are rendered
-    //         }
-    //     });
-    // }
 
     function updateNoShowList() {
         chrome.storage.local.get("CHOICE_RESULTS", (data) => {
