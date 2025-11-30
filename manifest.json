@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Booking → Choice Advantage Reservation Validator",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Helps during Reconciliation, check all the Reservation from Booking in choice advantage.",
   "permissions": [
     "storage",
