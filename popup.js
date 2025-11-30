@@ -122,6 +122,58 @@ document.addEventListener("DOMContentLoaded", () => {
     setInterval(pollBotStatus, 500);
 });
 
+
+document.addEventListener("DOMContentLoaded", () => {
+    chrome.storage.local.get(["FILTER_STATUSES", "HIDE_ZERO"], data => {
+        let savedStatuses = data.FILTER_STATUSES;
+        let hideZero = data.HIDE_ZERO;
+
+        // --- FIRST LOAD DEFAULTS ---
+        if (!savedStatuses) {
+            // all checked as default
+            savedStatuses = Array.from(document.querySelectorAll(".statusFilter"))
+                .map(cb => cb.value);
+
+            chrome.storage.local.set({ FILTER_STATUSES: savedStatuses });
+        }
+
+        if (hideZero === undefined) {
+            // default: hideZero = false
+            hideZero = false;
+            chrome.storage.local.set({ HIDE_ZERO: hideZero });
+        }
+        // --------------------------------------
+
+        // apply to UI
+        document.querySelectorAll(".statusFilter").forEach(cb => {
+            cb.checked = savedStatuses.includes(cb.value);
+        });
+
+        document.getElementById("hideZeroCommission").checked = hideZero;
+
+        updateNoShowList();
+    });
+});
+
+
+document.querySelectorAll(".statusFilter").forEach(cb => {
+    cb.addEventListener("change", () => {
+        const selected = Array.from(document.querySelectorAll(".statusFilter:checked"))
+            .map(x => x.value);
+
+        chrome.storage.local.set({ FILTER_STATUSES: selected });
+        updateNoShowList();
+    });
+});
+
+document.getElementById("hideZeroCommission").addEventListener("change", (e) => {
+    chrome.storage.local.set({ HIDE_ZERO: e.target.checked });
+    updateNoShowList();
+});
+
+
+
+
 document.addEventListener("DOMContentLoaded", () => {
 
     const tooltip = document.getElementById("tooltip");
@@ -247,4 +299,3 @@ document.addEventListener("DOMContentLoaded", () => {
         cb.addEventListener("change", updateNoShowList);
     });
 });
-
