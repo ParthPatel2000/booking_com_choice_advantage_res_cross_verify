@@ -5,6 +5,8 @@ let reservations = {};        // loaded from popup; each key is reservation#, va
 let reservationQueue = [];    // list of reservation numbers
 let currentIndex = 0;         // pointer
 let botRunning = false;
+let singleSearch = null;
+let runningSingle = false;
 
 
 function saveState() {
@@ -50,6 +52,21 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
     if (msg.type === "GET_STATUS") {
         sendResponse({ running: botRunning });
+    }
+
+    if (msg.type === "START_SINGLE_SEARCH") {
+        singleSearch = msg.reservation;
+        runningSingle = true;
+
+        // Redirect to init page
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (!tabs || !tabs.length) return;
+        
+            chrome.tabs.update(tabs[0].id, {
+                url: "https://www.choiceadvantage.com/choicehotels/FindReservationInitialize.init"
+            });
+        });
+        return;
     }
 
     // From popup → load reservations and reset
@@ -154,7 +171,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 // TAB UPDATED → INJECT CONTENT SCRIPTS
 // ===============================
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (!botRunning) return; // only inject if bot is running
+    if (!botRunning && !runningSingle) return; // only inject if bot is running
     if (changeInfo.status !== "complete") return;
     if (!tab.url) return;
 
@@ -163,11 +180,30 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
         console.log("Injecting findReservationByDetails.js on Init");
 
         chrome.scripting.executeScript({
-            target: { tabId },
-            files: ["scripts/findReservationByDetails.js"]
+        target: { tabId },
+        files: ["scripts/findReservationByDetails.js"]
         }, () => {
-            console.log("findReservationByDetails.js injected");
-            sendNextReservation(tabId);
+    
+            console.log("Init page script injected");
+    
+            if (runningSingle && singleSearch) {
+                console.log("Running single search for: ", singleSearch)
+                // ⭐ SEND ONLY THIS ONE RESERVATION
+                chrome.tabs.sendMessage(tabId, {
+                    type: "SEARCH_RESERVATION",
+                    reservation: singleSearch
+                });
+    
+                runningSingle = false;
+                singleSearch = null;
+                return;
+            }
+    
+            // Otherwise continue auto search
+            if (botRunning) {
+                sendNextReservation(tabId);
+            }
+    
         });
     }
 
