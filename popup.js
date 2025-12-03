@@ -256,6 +256,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 const line = document.createElement("div");
                 line.textContent = `${index + 1} - ${data.lastname}, ${data.firstname} - ${status}`;
 
+                line.addEventListener("click", () => {
+                    console.log("Clicked:", data.firstname, data.lastname);
+                    chrome.runtime.sendMessage({
+                        type: "START_SINGLE_SEARCH",
+                        reservation: data
+                    });
+                });
+
+                
                 line.dataset.tooltip =
                     `Name: ${data.firstname} ${data.lastname}\n` +
                     `Booking Status: ${data.status}\n` +
